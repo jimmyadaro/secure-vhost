@@ -46,9 +46,19 @@ If you need a certificate for production environments, just use [Let's Encrypt](
 
 This certificate is a self-signed [X.509](https://en.wikipedia.org/wiki/X.509) (v3) certificate created with OpenSSL. It uses **SHA512** as message digest and a **2048-bits RSA key**. It'll automatically expire in 365 days (this can be modified, read below "_Usage and options_"). All the Subject information fields are empty, except **_Common Name_ and _Alternative Name_** for obvious reasons. This can be modified as you need.
 
-#### How this looks in the browser:
+#### How this looks in the browser (Chrome):
 
-{screenshots here}
+1. Virtualhost created successfully:
+
+![Virtualhost created successfully](https://i.imgur.com/TIkk8eT.png)
+
+2. Chrome Devtools:
+
+![Chrome Devtools](https://i.imgur.com/r0W5yAB.png)
+
+3. Certificate information:
+
+![Certificate information](https://i.imgur.com/E9150eQ.png)
 
 ___
 
