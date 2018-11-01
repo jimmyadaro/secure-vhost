@@ -1,0 +1,280 @@
+#!/usr/bin/env bash
+
+#title           :secure-vhost
+#description     :Create a SSL-secure Apache VirtualHost in XAMPP using CLI
+#usage		       :"$ secure-vhost yourdomain.local" or whatever local domain you want to use
+#author		       :jimmyadaro
+#link            :https://github.com/jimmyadaro/macos-apache-secure-vhost
+#date            :2018-10-22
+#version         :1.0
+#license         :Copyright 2018 Jimmy Adaro - MIT License
+#notes           :Please, do not use this certificates on production environments (and RTFM)
+
+#Usage
+usage() {
+  echo "USAGE: secure-vhost -d yourdomain.local [-f foldername] [-D 365] [-r] [-v]"
+  echo ""
+  echo "  -d: Domain for your new VirtualHost"
+  echo "  -f: Folder name inside of default XAMPP htdocs folder"
+  echo "  -D: Days until certificate expires"
+  echo "  -r: Restart XAMPP Apache after VirtualHost creation"
+  echo "  -v: Display current variables"
+  echo ""
+  echo ""
+  echo ""
+  echo "  More info: https://github.com/jimmyadaro/macos-apache-secure-vhost"
+  echo ""
+  echo ""
+  echo ""
+  exit 1;
+}
+
+#Options by default
+domain="localhost"
+folder=$domain
+ssl_days=365
+restartApache=0
+
+#Edit this variables as you need
+hosts_file="/private/etc/hosts"
+xampp_path="/Applications/XAMPP"
+htdocs_path="$xampp_path/xamppfiles/htdocs"
+virtual_hosts_file="$xampp_path/xamppfiles/etc/extra/httpd-vhosts.conf"
+secure_vhost_folder="$HOME/Secure-Vhost" #It would be great if you don't change this, but this is Open Source so... Whatever
+cert_files_path="$secure_vhost_folder/$domain"
+
+#Show current vars
+vars() {
+  echo "> Current variables:"
+  echo ">   Hosts file: $hosts_file"
+  echo ">   XAMPP path: $xampp_path/"
+  echo ">   htdocs path: $htdocs_path/"
+  echo ">   VirtualHosts config file: $virtual_hosts_file"
+  echo ">   Secure Vhost path: $secure_vhost_folder/"
+  echo ">   Certificates files path: $secure_vhost_folder/yourdomain.local/ (example)" #cert_files_path is not used here because $domain is not defined yet
+  echo ">   Certificates validation days: $ssl_days"
+  exit 1;
+}
+
+#If there is no arguments, show usage
+if [[ -z "$1" ]]; then
+  usage
+fi
+
+#Check if the option is flag (starts with)
+stop_if_arg_is_flag() {
+  declare OptionArg="$1" ScriptOption="$2" OptionName="$3"
+
+  if [[ "$OptionArg" = "-"* ]]; then
+    return_fatal_error "$OptionName ($ScriptOption) cannot be a flag (\"$OptionArg\")"
+  fi
+}
+
+#Function for OK situations
+return_ok() {
+  declare ok_message="$1"
+
+  echo "OK: $ok_message"
+}
+
+#Function for informative situations
+return_info() {
+  declare info_message="$1"
+
+  echo "INFO: $info_message"
+}
+
+#Function for fatal error situations
+return_fatal_error() {
+  declare error_message="$1"
+
+  echo
+  echo "FATAL ERROR: $error_message"
+  echo "SHUTTING DOWN"
+  echo
+  exit 1
+}
+
+#Get the user options
+#Default error output is disabled
+while getopts ":hd:f:D:rv" OPTIONS; do
+    case "${OPTIONS}" in
+        #If there is no arguments, show usage
+        h)
+          usage
+            ;;
+        #If -d has argument (d: means it expects argument)
+        d)
+          stop_if_arg_is_flag "$OPTARG" "-d" "Domain" #Returns: echo "FATAL ERROR: Domain (-d) cannot be a flag"
+
+          #If is not flag, override previous $domain
+          domain="$OPTARG"
+          cert_files_path="$secure_vhost_folder/$domain"
+          return_info "\"$domain\" has been set to be used as VirtualHost domain"
+            ;;
+
+        #If -f has argument (f: means it expects argument)
+        f)
+          stop_if_arg_is_flag "$OPTARG" "-f" "Folder" #Returns: echo "FATAL ERROR: Folder (-f) cannot be a flag"
+
+          #If is not flag, override previous $folder
+          folder="$OPTARG"
+          return_info "\"htdocs/$folder\" has been set to be used as VirtualHost \"DocumentRoot\" and \"Directory\""
+            ;;
+
+        #If -D has argument (D: means it expects argument)
+        D)
+          stop_if_arg_is_flag "$OPTARG" "-D" "Certificate expiration days" #Returns: echo "FATAL ERROR: Certificate expiration days (-D) cannot be a flag"
+
+          #If is not flag, override previous $folder
+          ssl_days="$OPTARG"
+          return_info "The certificate will expire in $ssl_days days"
+            ;;
+
+        #If -r has argument (r: means it expects argument)
+        r)
+          stop_if_arg_is_flag "$OPTARG" "-r" "Restart Apache instruction" #Returns: echo "FATAL ERROR: Restart Apache instruction (-r) cannot be a flag"
+
+          #If is not flag, override previous $folder
+          restartApache=1
+          return_info "Apache will be automatically restarted after VirtualHost and certificate installation"
+            ;;
+
+        #If some option with arguments is empty throw fatal error
+        :)
+          return_fatal_error "Option \"-$OPTARG\" requires an argument."
+          ;;
+        \?)
+          #Anything that is not   👇    there
+          #    "while getopts :hd:f:D:rv" OPTIONS (...)
+          #is an error, and its value will be passed to $OPTARG variable
+          #Example: "$ secure-vhost -c" Since "c" option does not exists, throw fatal error
+          return_fatal_error "\"-$OPTARG\" is not an available option"
+          ;;
+    esac
+done
+
+#If argument 1 (-d from getopts) is empty throw fatal error
+if [ ! "$1" = "-d" ]; then
+  return_fatal_error "Domain (\"-d\") is required."
+fi
+
+#HERE STARTS THE MAIN SECURE-VHOST SCRIPT
+
+#Check if $domain exists in your virtual hosts file
+if grep -Fq "$domain:443" $virtual_hosts_file
+  #If it does, stop everything
+  then
+      echo "IMPORTANT: Safe VirtualHost \"$domain:443\" already exists in your configuration file"
+      echo "> Nothing to do, goodbye! 👋"
+      exit
+  else
+    #Check if $domain exists in your hosts file
+    if grep -Fq "$domain" $hosts_file
+      then
+        echo "INFO: Host \"$domain:443\" exist in hosts file, not creating new entry"
+      else
+        echo "INFO: Host \"$domain:443\" does not exist hosts file, creating entry..."
+        echo "127.0.0.1 $domain" | sudo tee -a /private/etc/hosts > /dev/null
+        echo "> Host \"$domain:443\" added to hosts file"
+    fi
+
+    #Check if $folder exists in htdocs directory
+    if [ ! -d "$htdocs_path/$folder" ]; then
+      while true; do
+          read -p "IMPORTANT: "$folder" does not exist inside XAMPP htdocs, do you want to create it? [Y/n] " yn
+          case $yn in
+              #Yes, create the folder
+              [Yy]* )
+                sudo mkdir $htdocs_path/$folder/
+                sudo chown -R $USER:staff $htdocs_path/$folder/
+                echo "> OK! Folder created successfully";
+                break ;;
+
+              #No, do not create the folder
+              [Nn]* )
+                break;;
+
+              #Other than Yy or Nn
+              * )
+                echo "! Please answer yes or no";;
+          esac
+      done
+    fi
+
+    #Check if Secure-Vhost folder exists
+    if [ ! -d "$secure_vhost_folder" ]; then
+      sudo mkdir $secure_vhost_folder/
+      echo "INFO: Secure-Vhost folder created in: $secure_vhost_folder/"
+    fi
+
+    # Create directory for cert files
+    if [ ! -d "$cert_files_path/" ]; then
+      sudo mkdir $cert_files_path/
+      echo "INFO: Certificate files folder created in: $cert_files_path/"
+    else
+      sudo rm -r $cert_files_path/*
+      echo "INFO: Old certificates files removed, creating new files..."
+    fi
+
+    # Set current user as owner for certificates folder
+    sudo chown -R $USER:staff $cert_files_path
+
+    # Create cert extension for alt_names ("Common Name")
+    cert_file_v3_ext=$cert_files_path/v3.ext
+
+    touch $cert_file_v3_ext
+
+    echo "subjectAltName = @alt_names
+
+[alt_names]
+DNS.1 = $domain
+DNS.2 = www.$domain" >> $cert_file_v3_ext
+
+    # Cert files variables
+    cert_file_key=$cert_files_path/cert.key
+    cert_file_csr=$cert_files_path/cert.csr
+    cert_file_crt=$cert_files_path/cert.crt
+
+    # Key
+    sudo openssl genrsa -out $cert_file_key 2048 &> /dev/null
+    # CSR
+    sudo openssl req -new -sha256 -key $cert_file_key -subj "/CN=$domain" -out $cert_file_csr &> /dev/null
+    # Cert
+    sudo openssl x509 -req -extfile $cert_file_v3_ext -days $ssl_days -in $cert_file_csr -signkey $cert_file_key -out $cert_file_crt &> /dev/null
+    return_ok "INFO: Certificate files created and stored in: $cert_files_path/"
+
+    # Add the VirtualHost configuration into VH config file
+    echo "
+<VirtualHost $domain:443>
+  ServerName $domain:443
+  ServerAlias $domain
+  DocumentRoot \"$xampp_path/xamppfiles/htdocs/$folder/\"
+  <Directory \"$xampp_path/xamppfiles/htdocs/$folder/\">
+    Options All
+    AllowOverride All
+    Require all granted
+  </Directory>
+  ErrorLog \"logs/$domain-ssl-error.log\"
+
+  SSLEngine on
+  SSLCertificateFile \"$cert_file_crt\"
+  SSLCertificateKeyFile \"$cert_file_key\"
+</VirtualHost>" >> $virtual_hosts_file
+echo "> VirtualHost added into your configuration file"
+
+  # Add cert to System Keychain
+  sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain $cert_file_crt
+  return_ok "Self-signed certificate added to your System keychain"
+
+  # Check if Apache should be restarted
+  if [ $restartApache = 1 ]; then
+    # Restart Apache
+    return_ok "XAMPP's Apache is gonna be restarted, this may take a while..."
+    sudo $xampp_path/xamppfiles/xampp restartapache
+    return_ok "Done! ✅  You can access now: https://$domain"
+  else
+    return_ok "Done! ✅  You must restart XAMPP Apache manually. After it loaded you can access to: https://$domain"
+  fi
+
+fi
