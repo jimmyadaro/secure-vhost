@@ -6,7 +6,7 @@ Create a self-signed **SSL-secured VirtualHost** with a simple command.
 
 #### But why?
 
-Modern websites and web-basd apps are going full-encrypted, some API vendors (such as Google Cloud Platform, Mapbox, Facebook...) **require**  that you use a secure SSL/TLS certificate to use their services. Now you can easily do it in localhost!
+Modern websites and web-based apps are going full-encrypted, some API vendors (such as Google Cloud Platform, Mapbox, Facebook...) **require**  that you use a secure SSL/TLS certificate to use their services. Now you can easily do it in localhost!
 
 #### Important notes
 
@@ -28,7 +28,7 @@ ___
 
 5. Self-signed certificate is created.
 
-6. Safe virtualhost is created in XAMPP's configuration file.
+6. Safe VirtualHost is created in XAMPP's configuration file.
 
 7. Self-signed certificate is added to your System keychain.
 
@@ -48,9 +48,9 @@ This certificate is a self-signed [X.509](https://en.wikipedia.org/wiki/X.509) (
 
 #### How this looks in the browser (Chrome):
 
-1. Virtualhost created successfully:
+1. VirtualHost created successfully:
 
-![Virtualhost created successfully](https://i.imgur.com/TIkk8eT.png)
+![VirtualHost created successfully](https://i.imgur.com/TIkk8eT.png)
 
 2. Chrome Devtools:
 
@@ -88,7 +88,7 @@ $ secure-vhost -h
 
 ### Basic usage
 
-**You have to** pass `-d` as required flag for the virtualhost domain. This will automatically create your secure virtualhost (as explained on "_How it works_"), **assuming** you have a folder with the same name as your domain inside your XAMPP _htdocs_ folder.
+**You have to** pass `-d` as required flag for the VirtualHost domain. This will automatically create your secure VirtualHost (as explained on "_How it works_"), **assuming** you have a folder with the same name as your domain inside your XAMPP _htdocs_ folder.
 
 ```
 $ secure-vhost -d yourdomain.local
@@ -102,7 +102,7 @@ If you don't have a `htdocs/yourdomain.local` folder (and don't want to create o
 $ secure-vhost -d yourdomain.local -f myproject
 ```
 
-This will tell the script to set the virtualhost `DocumentRoot` and `Directory` pointing to your `htdocs/myproject` folder.
+This will tell the script to set the VirtualHost `DocumentRoot` and `Directory` pointing to your `htdocs/myproject` folder.
 
 ### Set certificate expiration days
 
@@ -173,9 +173,9 @@ Need to change this? Just edit the main script (`secure-vhost`), you'll find the
 
 Please check this:
 
-- If you didn't restarted Apache (`-r`) yet, you need to do it in order to allow Apache recognize this new virtualhost.
+- If you didn't restarted Apache (`-r`) yet, you need to do it in order to allow Apache recognize this new VirtualHost.
 
-- Check other virtualhosts (if you have others, or _localhost_) are running besides this new one. If not, then **Apache may not fully restarted**, just wait.
+- Check other VirtualHosts (if you have others, or _localhost_) are running besides this new one. If not, then **Apache may not fully restarted**, just wait.
 
 ---
 
