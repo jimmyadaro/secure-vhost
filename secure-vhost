@@ -1,14 +1,13 @@
 #!/usr/bin/env bash
 
-#title           :secure-vhost
-#description     :Create a SSL-secure Apache VirtualHost in XAMPP using CLI
-#usage		       :"$ secure-vhost yourdomain.local" or whatever local domain you want to use
-#author		       :jimmyadaro
-#link            :https://github.com/jimmyadaro/macos-apache-secure-vhost
-#date            :2018-10-22
-#version         :1.0
-#license         :Copyright 2018 Jimmy Adaro - MIT License
-#notes           :Please, do not use this certificates on production environments (and RTFM)
+#title            :secure-vhost
+#description      :Create a SSL-secure Apache VirtualHost in XAMPP using CLI
+#usage            :Basic usage is "$ secure-vhost -d yourdomain.local" but please RTFM
+#author           :jimmyadaro
+#link             :https://github.com/jimmyadaro/macos-apache-secure-vhost
+#version          :1.0
+#license          :Copyright 2018 Jimmy Adaro - MIT License
+#notes            :Please, do not use this certificates on production environments (and RTFM)
 
 #Usage
 usage() {
