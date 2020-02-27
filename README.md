@@ -169,6 +169,10 @@ Need to change this? Just edit the main script (`secure-vhost`), you'll find the
 
 **After Apache has been restarted**, just open `https://yourdomain.local` on your favorite browser and _voilà_!
 
+### Using Gulp.js
+
+If you're using [Gulp.js](https://gulpjs.com/), you can check this gist to learn how to use these certificates using [browserSync](https://browsersync.io/): [https://gist.github.com/jimmyadaro/c0be14a8484e6d42b73ef9d44deaaba7](https://gist.github.com/jimmyadaro/c0be14a8484e6d42b73ef9d44deaaba7)
+
 #### It's not working
 
 Please check this:
